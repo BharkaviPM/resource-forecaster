@@ -1,0 +1,112 @@
+<!-- metrics/templates/metrics/upload.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload CSV</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f9d58 0%, #00bcd4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .upload-container {
+            background: rgba(255, 255, 255, 0.93);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0, 89, 106, 0.14);
+            padding: 38px 42px;
+            max-width: 430px;
+            width: 100%;
+        }
+        h2 {
+            text-align: center;
+            font-size: 2rem;
+            color: #1b7f79;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        form p {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            width: 100%;
+            border: 2px solid #00a2a7;
+            border-radius: 7px;
+            padding: 10px;
+            background: #eafaf6;
+            transition: border-color 0.2s;
+        }
+        input[type="file"]:hover {
+            border-color: #198ab9;
+        }
+        button {
+            background: linear-gradient(90deg, #00bcd4 20%, #009688 80%);
+            color: #fff;
+            border: none;
+            border-radius: 22px;
+            padding: 13px 43px;
+            font-size: 1.12rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+            display: block;
+            margin: 0 auto;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #009688 20%, #00bcd4 80%);
+            transform: scale(1.05);
+        }
+        .visualization {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .peacock-visual {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #18c085 60%, #0099d8 100%);
+            box-shadow: 0 0 18px 5px #1b9f9b50;
+            position: relative;
+        }
+        .peacock-visual:after {
+            content: '';
+            display: block;
+            width: 18px;
+            height: 18px;
+            background: #1f2e53;
+            border-radius: 50%;
+            position: absolute;
+            left: 25px;
+            top: 32px;
+            box-shadow: 0 2px 8px 0 #2e3640;
+        }
+        /* Animate visual */
+        @keyframes swing {
+            0% { transform: rotate(-10deg);}
+            50% { transform: rotate(10deg);}
+            100% { transform: rotate(-10deg);}
+        }
+        .peacock-visual {
+            animation: swing 2.6s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="visualization">
+            <div class="peacock-visual"></div>
+        </div>
+        <h2>Upload CSV File</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Upload CSV</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Resource Usage Forecast Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f2f8ff; }
+    .container { max-width: 1200px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 4px 18px #188ece15; padding: 32px; }
+    h2 { text-align: center; margin-bottom: 12px; color: #11998e;}
+    .alerts { background: #ffeadf; color: #b3561a; border: 1px solid #f4b183; border-radius: 8px; padding: 12px 20px; margin: 18px 0; }
+    .plot-container { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 36px; }
+    .plot-box { width: 100%; max-width: 33%; min-width: 340px; margin-bottom: 32px; }
+    #plot-cpu, #plot-mem, #plot-storage { height: 370px; }
+    table { border-collapse: collapse; width: 98%; margin: 18px auto; background: #e8fcfb; }
+    th, td { padding: 7px 10px; border: 1px solid #c7e6e3; text-align: center; }
+    th { background-color: #7ed6df; color: #1b2727;}
+    tr:nth-child(even) { background: #dffaf7; }
+    .section-title { margin-top: 24px; font-size: 1.15em; color: #18789e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h2>Resource Usage Forecast Dashboard</h2>
+    {% if alerts %}
+      <div class="alerts">
+        <strong>Alerts:</strong>
+        <ul>
+          {% for alert in alerts %}
+            <li>{{ alert }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% if message %}
+      <div class="alerts">{{ message }}</div>
+    {% endif %}
+
+    <!-- Plots -->
+    <div class="plot-container">
+      <div class="plot-box"><h4>CPU Usage</h4><div id="plot-cpu"></div></div>
+      <div class="plot-box"><h4>Memory Usage</h4><div id="plot-mem"></div></div>
+      <div class="plot-box"><h4>Storage Usage</h4><div id="plot-storage"></div></div>
+    </div>
+
+    <!-- Historical Table -->
+    <div>
+      <h3 class="section-title">Recent Historical Usage (Last 50 Records)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>CPU Usage</th>
+            <th>Memory Usage</th>
+            <th>Storage Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in historical_table %}
+            <tr>
+              <td>{{ row.timestamp }}</td>
+              <td>{{ row.cpu_usage }}</td>
+              <td>{{ row.memory_usage }}</td>
+              <td>{{ row.storage_usage }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Plotly JS -->
+    <script type="text/javascript">
+      let data = JSON.parse('{{ data|safe|escapejs }}');
+      let forecast_cpu = JSON.parse('{{ forecast_cpu|safe|escapejs }}');
+      let forecast_mem = JSON.parse('{{ forecast_mem|safe|escapejs }}');
+      let forecast_storage = JSON.parse('{{ forecast_storage|safe|escapejs }}');
+
+      function drawForecastPlot(divid, data_col, forecast, title, yaxis) {
+        let x = data.timestamp || [];
+        let y_actual = data[data_col] || [];
+        let x_pred = forecast.ds || [];
+        let y_pred = forecast.yhat || [];
+        let y_lower = forecast.yhat_lower || [];
+        let y_upper = forecast.yhat_upper || [];
+
+        if (x.length && y_actual.length && x_pred.length && y_pred.length) {
+          let ci_x = x_pred.concat(x_pred.slice().reverse());
+          let ci_y = y_upper.concat(y_lower.slice().reverse());
+
+          // Combine all timestamps for range
+          let allDates = x.concat(x_pred);
+          let allDateObjs = allDates.map(dateStr => new Date(dateStr));
+          let minDate = new Date(Math.min.apply(null, allDateObjs));
+          let maxDate = new Date(Math.max.apply(null, allDateObjs));
+
+          var trace_actual = {
+            x: x, y: y_actual, mode: 'lines', name: 'Actual',
+            line: {color: '#139bff'}
+          };
+          var trace_pred = {
+            x: x_pred, y: y_pred, mode: 'lines', name: 'Forecast',
+            line: {color: '#fc8711'}
+          };
+          var trace_ci = {
+            x: ci_x, y: ci_y, fill: 'toself', fillcolor: 'rgba(252, 135, 17, 0.21)',
+            line: {color: 'transparent'}, name: '95% Interval', showlegend: false
+          };
+
+          Plotly.newPlot(divid, [trace_actual, trace_pred, trace_ci], {
+            title,
+            margin: {t: 40, b: 40},
+            xaxis: {
+              title: 'Timestamp',
+              tickformat: '%Y-%m-%d',
+              range: [minDate.toISOString(), maxDate.toISOString()]
+            },
+            yaxis: {title: yaxis},
+            legend: {orientation: 'h', y: -0.2}
+          }, {responsive: true});
+        } else {
+          document.getElementById(divid).innerHTML = '<p style="color:red;">No data available.</p>';
+        }
+      }
+
+      drawForecastPlot('plot-cpu', 'cpu_usage', forecast_cpu, '', 'CPU Usage (%)');
+      drawForecastPlot('plot-mem', 'memory_usage', forecast_mem, '', 'Memory Usage (%)');
+      drawForecastPlot('plot-storage', 'storage_usage', forecast_storage, '', 'Storage Usage (%)');
+    </script>
+  </div>
+</body>
+</html>
