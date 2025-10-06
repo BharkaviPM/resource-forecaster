@@ -1,6 +1,5 @@
 # Resource Forecaster
-Developing a collaborative cloud based project using Python, Docker and Operating Systems
-\n Its a Ongoing Development
+Developing a collaborative cloud based project using Python, Docker and OS and its in a Progress for Development
 
 # Output
 <img width="1917" height="972" alt="Image" src="https://github.com/user-attachments/assets/acd3b869-f6d0-4a81-b6b1-f33e38792ecd" />
