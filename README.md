@@ -7,3 +7,13 @@ Developing a collaborative cloud based project using Python, Docker and OS and i
 ---
 
 <img width="1919" height="1015" alt="Image" src="https://github.com/user-attachments/assets/db6a7070-891b-4369-bce5-91125f1869db" />
+
+---
+Real Time data Output
+---
+
+<img width="1910" height="1005" alt="Image" src="https://github.com/user-attachments/assets/1f6ff5db-805f-460d-8d14-bf5449dcc6fc" />
+
+---
+
+
