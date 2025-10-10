@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py generate_synthetic --hours 240 &&
+             gunicorn project_settings.wsgi:application --bind 0.0.0.0:8000"
