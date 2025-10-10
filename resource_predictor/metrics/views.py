@@ -3,7 +3,8 @@ import json
 from django.shortcuts import render, redirect
 from .models import ResourceMetric
 from .forms import UploadFileForm
-from .ml import forecast_prophet
+from .forecasting import forecast_prophet
+
 
 
 # Helper to convert all pd.Timestamp to ISO format strings for JSON
