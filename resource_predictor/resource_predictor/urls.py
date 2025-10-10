@@ -18,8 +18,11 @@ from django.contrib import admin
 from django.urls import path
 from metrics import views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('upload/', views.upload_data, name='upload_data'),
-    path('dashboard/', views.dashboard, name='dashboard')
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('api/metrics/', views.api_post_metrics, name='api_post_metrics'),
+    path('dashboard/data/', views.dashboard_data, name='dashboard-data-json'),
 ]

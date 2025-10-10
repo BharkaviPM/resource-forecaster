@@ -129,3 +129,81 @@ def dashboard(request):
         'forecast_table_storage': forecast_table_storage,
         'n_hours': N
     })
+
+# In metrics/views.py or a separate api_views.py
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import ResourceMetric
+from django.utils.dateparse import parse_datetime
+
+@csrf_exempt
+def api_post_metrics(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            timestamp = parse_datetime(data.get('timestamp'))
+            cpu = float(data.get('cpu_usage', 0))
+            mem = float(data.get('memory_usage', 0))
+            storage = float(data.get('storage_usage', 0))
+
+            if timestamp is None:
+                return JsonResponse({'error': 'Invalid timestamp'}, status=400)
+
+            # Save or update your model
+            obj, created = ResourceMetric.objects.update_or_create(
+                timestamp=timestamp,
+                defaults={
+                    'cpu_usage': cpu,
+                    'memory_usage': mem,
+                    'storage_usage': storage
+                }
+            )
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=405)
+
+from django.http import JsonResponse
+import pandas as pd
+from .models import ResourceMetric
+from .views import convert_timestamps
+
+import datetime
+import pytz
+
+def dashboard_data(request):
+    qs = ResourceMetric.objects.order_by('timestamp').values()
+    df = pd.DataFrame(qs)
+    df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+    df = df.dropna(subset=['timestamp']).sort_values('timestamp')
+
+    # Filter last 24 hours
+    tz = pytz.UTC
+    cutoff = datetime.datetime.now(tz) - datetime.timedelta(hours=24)
+    df_recent = df[df['timestamp'] >= cutoff]
+
+    N = 48  # forecast length
+    forecast_cpu = forecast_prophet(df_recent, 'cpu_usage', periods=N)
+    forecast_mem = forecast_prophet(df_recent, 'memory_usage', periods=N)
+    forecast_storage = forecast_prophet(df_recent, 'storage_usage', periods=N)
+
+    safe_data = convert_timestamps(df_recent.to_dict(orient='list'))
+    safe_forecast_cpu = convert_timestamps(forecast_cpu.to_dict(orient='list'))
+    safe_forecast_mem = convert_timestamps(forecast_mem.to_dict(orient='list'))
+    safe_forecast_storage = convert_timestamps(forecast_storage.to_dict(orient='list'))
+
+    # Convert recent data to list of records for table rendering
+    historical_table = df_recent.tail(50).to_dict('records')
+
+    return render(request, 'metrics/dashboard.html', {
+        'data': json.dumps(safe_data),
+        'forecast_cpu': json.dumps(safe_forecast_cpu),
+        'forecast_mem': json.dumps(safe_forecast_mem),
+        'forecast_storage': json.dumps(safe_forecast_storage),
+        'alerts': [],  # your alerts logic here if any
+        'historical_table': historical_table,
+        'n_hours': N,
+    })
+
